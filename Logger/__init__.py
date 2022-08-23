@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
-# pylint: disable=missing-module-docstring
 import logging
 import sys
 
