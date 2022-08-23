@@ -132,7 +132,7 @@ async def edit_release(message: types.Message) -> None:
                 'final_delta_time': None
                 }
             for param in params:
-                for key in params_dict.keys():
+                for key in params_dict:
                     if param.startswith(f'{key}='):
                         params_dict[key] = param.replace(f'{key}=', '')
             answer = mf.edit_release_in_db(chat_id,
@@ -164,7 +164,7 @@ async def edit_work_group(message: types.Message) -> None:
                 'admin': None
                 }
             for param in params:
-                for key in params_dict.keys():
+                for key in params_dict:
                     if param.startswith(f'{key}='):
                         params_dict[key] = param.replace(f'{key}=', '')
             answer = mf.edit_work_group_in_db(chat_id,
