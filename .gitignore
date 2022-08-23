@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ethalon config and DB
+database.db
+config.cfg
+
+# IDE files
+.idea

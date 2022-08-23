@@ -1,0 +1,10 @@
+[main]
+token = 123456789:abcdef
+db_file = database.db
+admin = unknown
+timeout = 60
+
+[release_settings]
+standard_release_time = 720,2160,2160,840,960
+fast_release_time = 120,240,240,60,120
+top_release_time = 360,1140,1140,360,480
