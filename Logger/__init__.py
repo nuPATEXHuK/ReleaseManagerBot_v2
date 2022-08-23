@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
+# pylint: disable=missing-module-docstring
 import logging
 import sys
-from logging.handlers import RotatingFileHandler
 
 LOG_FILE_MAX_SIZE = 1024 * 1024 * 1024
 LOG_FILE_MAX_BACKUP_COUNT = 5
