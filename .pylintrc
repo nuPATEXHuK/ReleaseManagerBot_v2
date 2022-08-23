@@ -1,3 +1,6 @@
+[MASTER]
+init-hook='import sys'
+
 [MESSAGES CONTROL]
 disable=missing-docstring,
         too-many-lines,
