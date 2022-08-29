@@ -19,9 +19,12 @@ def add_release(chat_id: int, code: str) -> str:
         return 'Релиз этого чата уже существует'
     if check.release_code_exist(code):
         return 'Релиз с таким кодом уже существует'
-    dbf.add_release(chat_id, code)
-    logger.info('Релиз добавлен')
-    return 'Релиз добавлен'
+    errors = dbf.add_release(chat_id, code)
+    if not errors:
+        logger.info('Релиз добавлен')
+        return 'Релиз добавлен'
+    else:
+        return errors
 
 
 def edit_release_in_db(chat_id: int, params_dict: dict) -> str:
@@ -38,8 +41,7 @@ def edit_release_in_db(chat_id: int, params_dict: dict) -> str:
     new_params = get_new_release_params_dict(params_dict, release_code)
     if not new_params:
         return 'Новые параметры релиза не заданы'
-    for param in new_params.keys():
-        dbf.set_new_param_value(param, new_params[param], release_code)
+    dbf.set_new_param_value(new_params, release_code)
     return 'Релиз изменён'
 
 
