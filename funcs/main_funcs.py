@@ -60,7 +60,7 @@ def edit_work_group_in_db(chat_id: int, params_dict: dict) -> str:
     if not new_params:
         return 'Новые пользователи в группах не заданы'
     for param in new_params.keys():
-        dbf.set_new_param_value(param, new_params[param], release_code)
+        dbf.set_new_param_value(new_params, release_code)
     return 'Рабочая группа релиза изменена'
 
 
@@ -141,30 +141,36 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
     answer = list()
     for code in active_releases_code:
         release_data = dbf.get_release_data_by_code(code)
-        chat_id = release_data['chat_id']
-        stage = release_data['stage']
-        admin = release_data['admin']
-        std_delta_time = release_data['std_delta_time']
-        cur_delta_time = release_data['cur_delta_time']
-        stage_key = release_data['stage_cur_time_key']
+        chat_id = int(release_data['chat_id'])
+        stage = str(release_data['stage'])
+        admin = str(release_data['admin'])
+        std_delta_time = int(release_data[f'{stage}_delta_time'])
+        stage_key = f'{stage}_current_time'
+        cur_delta_time = int(release_data[stage_key])
         cur_delta_time -= wait_time
-        dbf.set_new_param_value(stage_key, cur_delta_time, code)
+        dbf.set_new_param_value({stage_key: cur_delta_time}, code)
         step = std_delta_time / 4
         if cur_delta_time % step == 0 and cur_delta_time <= std_delta_time:
-            users = release_data['users']
+            users = str(release_data[f'{stage}_users']).split(' ')
             alert = ''
             if len(users) > 0:
                 for user in users:
-                    alert += f'@{user} '
+                    if user == 'None':
+                        alert += f'@{admin}'
+                    else:
+                        alert += f'@{user} '
             else:
                 alert += f'@{admin}'
             if cur_delta_time > 0:
                 alert += f'\nДо конца срока этапа {stage} ' \
                          f'осталось: {round(cur_delta_time / 60, 2)} ч.'
             else:
-                if len(users) > 0:
-                    alert += f'@{admin}'
-                alert += f'\nЭтап {stage} просрочен! Просрочка ' \
+                if len(users) > 0 and users[0] != 'None':
+                    alert += f' @{admin}'
+                if cur_delta_time == 0:
+                    alert += f'\nЭтап {stage} просрочен!'
+                else:
+                    alert += f'\nЭтап {stage} просрочен! Просрочка ' \
                          f'составляет: {-round(cur_delta_time / 60, 2)} ч.'
             answer.append([chat_id, alert])
     if len(answer) < 1:
@@ -228,3 +234,10 @@ def get_new_users_params_dict(params: dict,
     if len(new_params) < 1:
         return None
     return new_params
+
+
+def test_func():
+    answer = dbf.get_release_data_by_code('test_release')
+    if len(answer) > 0:
+        return str(answer['test'])
+    return answer

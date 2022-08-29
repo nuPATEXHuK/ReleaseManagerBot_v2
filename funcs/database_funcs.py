@@ -7,9 +7,16 @@ DB = SQLighter(cfg.get_db())
 ADMIN = cfg.get_admin()
 
 
-def formate_one(result:str):
+def formate_one(result: str):
     return result.replace('(', '').replace(')', '').replace(
         '\'', '').replace(',', '')
+
+
+def formate_all(results: list):
+    result_list = list()
+    for result in results:
+        result_list.append(formate_one(str(result)))
+    return result_list
 
 
 def add_release(chat_id: int, code: str):
@@ -46,7 +53,7 @@ def get_status_by_code(code: str) -> List:
 
 
 def get_chat_id_by_code(code: str):
-    pass
+    return 0
 
 
 def get_active_releases_list() -> List[List]:
@@ -54,11 +61,39 @@ def get_active_releases_list() -> List[List]:
 
 
 def get_active_releases_code() -> List:
-    return []
+    request = 'SELECT code FROM releases WHERE status = 1'
+    releases = formate_all(SQLighter.execute_with_data_all(DB, request))
+    return releases
 
 
 def get_release_data_by_code(code: str) -> Dict:
-    return {}
+    request = f'SELECT * FROM releases WHERE code = "{code}"'
+    release_data = SQLighter.execute_with_data_one(DB, request)
+    if not release_data:
+        return dict()
+    results = formate_one(str(release_data)).split(' ')
+    return {'chat_id': results[1],
+            'name': results[3],
+            'status': results[4],
+            'stage': results[5],
+            'fast': results[6],
+            'top': results[7],
+            'current_ep': results[8],
+            'max_ep': results[9],
+            'role_delta_time': results[10],
+            'role_current_time': results[11],
+            'voice_delta_time': results[12],
+            'voice_current_time': results[13],
+            'timer_delta_time': results[14],
+            'timer_current_time': results[15],
+            'fix_delta_time': results[16],
+            'fix_current_time': results[17],
+            'final_delta_time': results[18],
+            'final_current_time': results[19],
+            'role_users': results[20],
+            'voice_users': results[21],
+            'timer_users': results[22],
+            'admin': results[23]}
 
 
 def set_new_param_value(params: dict, code: str):

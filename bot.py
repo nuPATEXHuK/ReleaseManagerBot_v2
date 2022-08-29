@@ -34,7 +34,11 @@ async def test(message: types.Message) -> None:
 
     :param message: входящая команда /test
     """
-    await message.answer('Test')
+    answer = mf.test_func()
+    if answer:
+        await message.answer(answer)
+    else:
+        await message.answer('Ничего не вернулось')
 
 
 @DP.message_handler(commands=['release_add'])

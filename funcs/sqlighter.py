@@ -1,7 +1,6 @@
 import sqlite3
-from sqlite3 import Error as error
+from sqlite3 import Error
 from Logger import logger
-from datetime import datetime
 
 
 class SQLighter:
@@ -16,7 +15,7 @@ class SQLighter:
             try:
                 self.cursor.execute(request)
                 return True
-            except error as e:
+            except Error as e:
                 logger.error('Ошибка при выполнении запроса в БД:\n%s', e)
                 return False
 
@@ -25,7 +24,7 @@ class SQLighter:
             try:
                 data = self.cursor.execute(request).fetchone()
                 return data
-            except error as e:
+            except Error as e:
                 logger.error('Ошибка при выполнении запроса в БД:\n%s', e)
                 return None
 
@@ -34,7 +33,7 @@ class SQLighter:
             try:
                 data = self.cursor.execute(request).fetchall()
                 return data
-            except error as e:
+            except Error as e:
                 logger.error('Ошибка при выполнении запроса в БД:\n%s', e)
                 return None
 
