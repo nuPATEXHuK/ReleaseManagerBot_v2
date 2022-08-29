@@ -59,8 +59,7 @@ def edit_work_group_in_db(chat_id: int, params_dict: dict) -> str:
     new_params = get_new_users_params_dict(params_dict, release_code)
     if not new_params:
         return 'Новые пользователи в группах не заданы'
-    for param in new_params.keys():
-        dbf.set_new_param_value(new_params, release_code)
+    dbf.set_new_param_value(new_params, release_code)
     return 'Рабочая группа релиза изменена'
 
 
@@ -93,7 +92,7 @@ def stop_release(chat_id: int) -> str:
     if not check.release_already_start(release_code):
         return 'Релиз уже остановлен'
     dbf.stop_release(release_code)
-    return 'Релиз запущен'
+    return 'Релиз остановлен'
 
 
 def get_release_status(chat_id: int) -> str:
@@ -107,9 +106,9 @@ def get_release_status(chat_id: int) -> str:
         return 'Релиз, привязанный к этому чату, не найден'
     release_code = dbf.get_release_code_by_chat(chat_id)
     status = dbf.get_status_by_code(release_code)
-    if status[0] != 'inactive':
+    if int(status[0]) != 0:
         return f'Релиз в работе, текущий этап: {status[1]}'
-    return 'Релиз остановлен'
+    return 'Релиз остановлен или не запущен'
 
 
 def get_releases_list() -> str:
@@ -124,7 +123,7 @@ def get_releases_list() -> str:
         answer = 'Нет активных релизов'
     else:
         for release in releases:
-            answer += f'•\t{release[0]}. Текущий этап: {release[1]}'
+            answer += f'•\t{release[0]}. Текущий этап: {release[1]}\n'
     return answer
 
 
@@ -151,7 +150,7 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
         dbf.set_new_param_value({stage_key: cur_delta_time}, code)
         step = std_delta_time / 4
         if cur_delta_time % step == 0 and cur_delta_time <= std_delta_time:
-            users = str(release_data[f'{stage}_users']).split(' ')
+            users = str(release_data[f'{stage}_users']).split('/')
             alert = ''
             if len(users) > 0:
                 for user in users:
@@ -237,7 +236,9 @@ def get_new_users_params_dict(params: dict,
 
 
 def test_func():
-    answer = dbf.get_release_data_by_code('test_release')
-    if len(answer) > 0:
-        return str(answer['test'])
+    status = check.release_already_start('test_release')
+    if status:
+        answer = 'Релиз запущен'
+    else:
+        answer = 'Релиз остановлен'
     return answer

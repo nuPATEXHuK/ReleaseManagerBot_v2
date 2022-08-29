@@ -48,16 +48,26 @@ def get_param(param_name, code):
     return param
 
 
-def get_status_by_code(code: str) -> List:
-    return []
-
-
-def get_chat_id_by_code(code: str):
-    return 0
+def get_status_by_code(code: str):
+    request = f'SELECT status, stage FROM releases WHERE code = "{code}"'
+    result = str(SQLighter.execute_with_data_one(DB, request))
+    if not result:
+        return []
+    result_list = formate_one(result).split(' ')
+    return result_list
 
 
 def get_active_releases_list() -> List[List]:
-    return []
+    releases_code = get_active_releases_code()
+    release_list = list()
+    for code in releases_code:
+        request = f'SELECT name, stage FROM releases WHERE code = "{code}"'
+        release_info = formate_all(
+            SQLighter.execute_with_data_one(DB, request))
+        name = release_info[0].replace('_', ' ')
+        status = release_info[1]
+        release_list.append([name, status])
+    return release_list
 
 
 def get_active_releases_code() -> List:
@@ -118,4 +128,10 @@ def start_release(code):
 
 
 def stop_release(code):
-    pass
+    set_new_param_value({'status': 0}, code)
+
+
+def get_code_from_all_releases():
+    request = f'SELECT code FROM releases'
+    codes = SQLighter.execute_with_data_all(DB, request)
+    return codes
