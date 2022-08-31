@@ -40,20 +40,20 @@ def get_release_code_by_chat(chat_id):
 
 def get_param(param_name, code):
     request = f'SELECT {param_name} FROM releases WHERE code = "{code}"'
-    result = str(SQLighter.execute_with_data_one(DB, request))
+    result = SQLighter.execute_with_data_one(DB, request)
     if not result:
         return 'Не получен параметр в связи с ошибкой БД. ' \
                'Обратитесь к администратору.'
-    param = formate_one(result)
+    param = formate_one(str(result))
     return param
 
 
 def get_status_by_code(code: str):
     request = f'SELECT status, stage FROM releases WHERE code = "{code}"'
-    result = str(SQLighter.execute_with_data_one(DB, request))
+    result = SQLighter.execute_with_data_one(DB, request)
     if not result:
         return []
-    result_list = formate_one(result).split(' ')
+    result_list = formate_one(str(result)).split(' ')
     return result_list
 
 
@@ -90,15 +90,15 @@ def get_release_data_by_code(code: str) -> Dict:
             'top': results[7],
             'current_ep': results[8],
             'max_ep': results[9],
-            'role_delta_time': results[10],
+            'role_std_time': results[10],
             'role_current_time': results[11],
-            'voice_delta_time': results[12],
+            'voice_std_time': results[12],
             'voice_current_time': results[13],
-            'timer_delta_time': results[14],
+            'timer_std_time': results[14],
             'timer_current_time': results[15],
-            'fix_delta_time': results[16],
+            'fix_std_time': results[16],
             'fix_current_time': results[17],
-            'final_delta_time': results[18],
+            'final_std_time': results[18],
             'final_current_time': results[19],
             'role_users': results[20],
             'voice_users': results[21],
@@ -111,20 +111,52 @@ def set_new_param_value(params: dict, code: str):
     for param in params:
         param_type = type(params[param])
         if param_type == str:
-            request += f'{param} = "{params[param]}" '
+            if params[param] == 'NULL':
+                request += f'{param} = {params[param]}, '
+            else:
+                request += f'{param} = "{params[param]}", '
         elif param_type == int:
-            request += f'{param} = {params[param]} '
+            request += f'{param} = {params[param]}, '
         else:
             return 'Неизвестный тип параметра'
-    request += f'WHERE code = "{code}"'
+    request = request.strip()[:-1]
+    request += f' WHERE code = "{code}"'
     result = SQLighter.execute_without_data(DB, request)
     if not result:
         return 'Релиз не добавлен в связи с ошибкой БД. ' \
                'Обратитесь к администратору.'
+    else:
+        return 'Релиз изменён'
 
 
-def start_release(code):
-    pass
+def start_release(code: str, reset: bool):
+    if int(get_param('fast', code)) == 1:
+        time_release = cfg.get_alert_stages('fast')
+    elif int(get_param('top', code)) == 1:
+        time_release = cfg.get_alert_stages('top')
+    else:
+        time_release = cfg.get_alert_stages('standard')
+    stage_list = ['role', 'voice', 'timer', 'fix', 'final']
+    for index, stage in enumerate(stage_list):
+        cur_std_time = get_param(f'{stage}_std_time', code)
+        manual_time = False
+        if cur_std_time == 'None':
+            set_new_param_value({f'{stage}_std_time': time_release[index]},
+                                code)
+        else:
+            manual_time = True
+        cur_time = get_param(f'{stage}_current_time', code)
+        if cur_time == 'None' or reset:
+            if manual_time:
+                set_new_param_value(
+                    {f'{stage}_current_time': int(cur_std_time)}, code)
+            else:
+                set_new_param_value(
+                    {f'{stage}_current_time': time_release[index]}, code)
+    cur_stage = get_param('stage', code)
+    if cur_stage == 'None' or reset:
+        set_new_param_value({'stage': 'role'}, code)
+    set_new_param_value({'status': 1}, code)
 
 
 def stop_release(code):

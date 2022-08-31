@@ -41,8 +41,8 @@ def edit_release_in_db(chat_id: int, params_dict: dict) -> str:
     new_params = get_new_release_params_dict(params_dict, release_code)
     if not new_params:
         return 'Новые параметры релиза не заданы'
-    dbf.set_new_param_value(new_params, release_code)
-    return 'Релиз изменён'
+    response = dbf.set_new_param_value(new_params, release_code)
+    return response
 
 
 def edit_work_group_in_db(chat_id: int, params_dict: dict) -> str:
@@ -63,11 +63,12 @@ def edit_work_group_in_db(chat_id: int, params_dict: dict) -> str:
     return 'Рабочая группа релиза изменена'
 
 
-def start_release(chat_id: int) -> str:
+def start_release(chat_id: int, reset: bool) -> str:
     """
     Запуск релиза в работу
 
     :param chat_id: ID чата, где вызвана команда
+    :param reset: параметр сброса текущего времени по этапам релиза
     :return: статус релиза
     """
     if not check.release_chat_exist(chat_id):
@@ -75,7 +76,7 @@ def start_release(chat_id: int) -> str:
     release_code = dbf.get_release_code_by_chat(chat_id)
     if check.release_already_start(release_code):
         return 'Релиз уже запущен в работу'
-    dbf.start_release(release_code)
+    dbf.start_release(release_code, reset)
     return 'Релиз запущен'
 
 
@@ -143,13 +144,13 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
         chat_id = int(release_data['chat_id'])
         stage = str(release_data['stage'])
         admin = str(release_data['admin'])
-        std_delta_time = int(release_data[f'{stage}_delta_time'])
+        std_time = int(release_data[f'{stage}_std_time'])
         stage_key = f'{stage}_current_time'
-        cur_delta_time = int(release_data[stage_key])
-        cur_delta_time -= wait_time
-        dbf.set_new_param_value({stage_key: cur_delta_time}, code)
-        step = std_delta_time / 4
-        if cur_delta_time % step == 0 and cur_delta_time <= std_delta_time:
+        cur_time = int(release_data[stage_key])
+        cur_time -= wait_time
+        dbf.set_new_param_value({stage_key: cur_time}, code)
+        step = std_time / 4
+        if cur_time % step == 0 and cur_time <= std_time:
             users = str(release_data[f'{stage}_users']).split('/')
             alert = ''
             if len(users) > 0:
@@ -160,17 +161,17 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
                         alert += f'@{user} '
             else:
                 alert += f'@{admin}'
-            if cur_delta_time > 0:
+            if cur_time > 0:
                 alert += f'\nДо конца срока этапа {stage} ' \
-                         f'осталось: {round(cur_delta_time / 60, 2)} ч.'
+                         f'осталось: {round(cur_time / 60, 2)} ч.'
             else:
                 if len(users) > 0 and users[0] != 'None':
                     alert += f' @{admin}'
-                if cur_delta_time == 0:
+                if cur_time == 0:
                     alert += f'\nЭтап {stage} просрочен!'
                 else:
                     alert += f'\nЭтап {stage} просрочен! Просрочка ' \
-                         f'составляет: {-round(cur_delta_time / 60, 2)} ч.'
+                         f'составляет: {-round(cur_time / 60, 2)} ч.'
             answer.append([chat_id, alert])
     if len(answer) < 1:
         return None
@@ -189,13 +190,16 @@ def get_new_release_params_dict(params: dict,
     new_params = dict()
     for key in params.keys():
         new_param_value = params[key]
+        if new_param_value == 'NULL':
+            new_params[key] = new_param_value
+            continue
         if new_param_value:
             param_from_db = dbf.get_param(key, release_code)
             if param_from_db == new_param_value:
                 continue
             else:
                 if not (key == 'name' or key == 'code'):
-                    if 'delta_time' in key:
+                    if 'std_time' in key:
                         new_params[key] = int(new_param_value) * 60
                     else:
                         new_params[key] = int(new_param_value)
@@ -218,18 +222,21 @@ def get_new_users_params_dict(params: dict,
     """
     new_params = dict()
     for key in params.keys():
-        new_param_value = params[key]
-        if new_param_value:
-            param_from_db = dbf.get_param(key, release_code)
-            if param_from_db == new_param_value:
-                continue
-            else:
-                user_list = str(new_param_value).split(',')
-                new_users = ''
-                for user in user_list:
-                    new_users += user.strip().replace('@', '') + ','
-                new_users = new_users.strip(',')
-                new_params[key] = new_users
+        if not params[key]:
+            continue
+        new_param_value = str(params[key]).replace('@', '')
+        param_from_db = str(dbf.get_param(key,
+                                          release_code)).replace('/', ',')
+        if param_from_db == new_param_value:
+            continue
+        else:
+            user_list = str(new_param_value).split(',')
+            new_users = ''
+            for user in user_list:
+                new_users += user + '/'
+            if new_users:
+                new_users = new_users[:-1]
+            new_params[key] = new_users
     if len(new_params) < 1:
         return None
     return new_params

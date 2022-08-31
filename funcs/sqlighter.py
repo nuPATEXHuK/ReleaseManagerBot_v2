@@ -16,7 +16,8 @@ class SQLighter:
                 self.cursor.execute(request)
                 return True
             except Error as e:
-                logger.error('Ошибка при выполнении запроса в БД:\n%s', e)
+                logger.error('Ошибка при выполнении запроса в БД:\n'
+                             '%s\nЗапрос:%s', e, request)
                 return False
 
     def execute_with_data_one(self, request: str):
@@ -25,7 +26,8 @@ class SQLighter:
                 data = self.cursor.execute(request).fetchone()
                 return data
             except Error as e:
-                logger.error('Ошибка при выполнении запроса в БД:\n%s', e)
+                logger.error('Ошибка при выполнении запроса в БД:\n'
+                             '%s\nЗапрос:%s', e, request)
                 return None
 
     def execute_with_data_all(self, request: str):
@@ -34,7 +36,8 @@ class SQLighter:
                 data = self.cursor.execute(request).fetchall()
                 return data
             except Error as e:
-                logger.error('Ошибка при выполнении запроса в БД:\n%s', e)
+                logger.error('Ошибка при выполнении запроса в БД:\n'
+                             '%s\nЗапрос:%s', e, request)
                 return None
 
     # Закрытие подключения к БД

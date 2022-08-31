@@ -67,12 +67,22 @@ async def release_start(message: types.Message) -> None:
     """
     Старт отслеживания релиза
 
-    :param message: входящая команда /release_start
+    :param message: входящая команда /release_start с параметром обновления
     """
     if int(message.chat.id) > 0:
         await message.answer('Работает только в группах')
     else:
-        answer = mf.start_release(message.chat.id)
+        param = message.text.replace(
+            '/release_start', '').replace(
+            '@releases_manager_bot', '').strip()
+        if param:
+            if param == 'reset':
+                answer = mf.start_release(message.chat.id, True)
+            else:
+                answer = ('Неверный параметр. Используйте reset для сброса '
+                          'текущего времени этапов релиза')
+        else:
+            answer = mf.start_release(message.chat.id, False)
         await message.answer(answer)
 
 
@@ -129,11 +139,11 @@ async def edit_release(message: types.Message) -> None:
                 'top': None,
                 'current_ep': None,
                 'max_ep': None,
-                'role_delta_time': None,
-                'voice_delta_time': None,
-                'timer_delta_time': None,
-                'fix_delta_time': None,
-                'final_delta_time': None
+                'role_std_time': None,
+                'voice_std_time': None,
+                'timer_std_time': None,
+                'fix_std_time': None,
+                'final_std_time': None
                 }
             for param in params:
                 for key in params_dict:
