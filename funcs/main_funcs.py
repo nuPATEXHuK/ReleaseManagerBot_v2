@@ -272,9 +272,8 @@ def new_tag(chat_id: int, tag: str) -> Optional[str]:
             if last_ep:
                 return 'Работа над релизом закончена'
             return 'Работа над серией закончена'
-        else:
-            dbf.new_stage(stage, code)
-            return f'Этап {stage} закончен'
+        dbf.new_stage(stage, code)
+        return f'Этап {stage} закончен'
     return None
 
 
