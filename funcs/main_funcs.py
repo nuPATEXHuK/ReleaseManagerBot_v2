@@ -124,7 +124,8 @@ def get_releases_list() -> str:
         answer = 'Нет активных релизов'
     else:
         for release in releases:
-            answer += f'•\t{release[0]}. Текущий этап: {release[1]}\n'
+            answer += (f'•\t{release[0]}. Серия: {release[2]}. '
+                       f'Текущий этап: {release[1]}\n')
     return answer
 
 
@@ -148,7 +149,10 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
         stage_key = f'{stage}_current_time'
         cur_time = int(release_data[stage_key])
         cur_time -= wait_time
-        dbf.set_new_param_value({stage_key: cur_time}, code)
+        cur_release_time = int(release_data['release_time'])
+        dbf.set_new_param_value({stage_key: cur_time,
+                                 'release_time': cur_release_time - wait_time},
+                                code)
         step = std_time / 4
         if cur_time % step == 0 and cur_time <= std_time:
             users = str(release_data[f'{stage}_users']).split('/')
@@ -171,7 +175,7 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
                     alert += f'\nЭтап {stage} просрочен!'
                 else:
                     alert += f'\nЭтап {stage} просрочен! Просрочка ' \
-                         f'составляет: {-round(cur_time / 60, 2)} ч.'
+                             f'составляет: {-round(cur_time / 60, 2)} ч.'
             answer.append([chat_id, alert])
     if len(answer) < 1:
         return None
@@ -204,6 +208,9 @@ def get_new_release_params_dict(params: dict,
                     else:
                         new_params[key] = int(new_param_value)
                 else:
+                    if key == 'code':
+                        if check.release_code_exist(new_param_value):
+                            continue
                     new_params[key] = new_param_value
     if len(new_params) < 1:
         return None
@@ -240,6 +247,71 @@ def get_new_users_params_dict(params: dict,
     if len(new_params) < 1:
         return None
     return new_params
+
+
+def new_tag(chat_id: int, tag: str) -> Optional[str]:
+    if not check.release_chat_exist(chat_id):
+        return None
+    code = dbf.get_release_code_by_chat(chat_id)
+    started = check.release_already_start(code)
+    if not started:
+        return None
+    stage = dbf.get_param('stage', code)
+    if stage == tag:
+        if stage == 'final':
+            last_ep = dbf.new_ep(code)
+            if last_ep:
+                return 'Работа над релизом закончена'
+            else:
+                return 'Работа над серией закончена'
+        else:
+            dbf.new_stage(stage, code)
+            return f'Этап {stage} закончен'
+
+
+def get_help():
+    answer = 'Справка по боту\n\n'
+    answer += ('Список команд:\n'
+               '•/release_add [code] - добавление релиза с уникальным кодом\n'
+               '•/edit_release [param_name=value, ...] - настройка релиза\n'
+               'Параметры:\n'
+               'name - имя релиза без пробелов (можно использовать "_")\n'
+               'code - уникальный код релиза\n'
+               'fast - 0 или 1, корректирует время этапов релиза\n'
+               'top - 0 или 1, корректирует время этапов релиза\n'
+               'current_ep - текущий эпизод релиза (по умолчанию 0)\n'
+               'max_ep - максимальный эпизод релиза\n'
+               '(параметры с std_time указывать при особых случаях, если '
+               'нужно стандартное время в зависимости от типа релиза - '
+               'использовать значение NULL для очистки)\n'
+               'role_std_time - время на расписывание ролей в часах\n'
+               'voice_std_time - время на озвучку в часах\n'
+               'timer_std_time - время на тайминг сведение в часах\n'
+               'fix_std_time - время на фиксы от войсеров в часах\n'
+               'final_std_time - время на финальную обработку серии в часах\n'
+               '•/edit_work_group [param_name=value, ...] - настройка рабочей '
+               'группы релиза\n'
+               'Параметры:\n'
+               'role_users - ник пользователя, который расписывает роли\n'
+               'voice_users - список ников войсеров через запятую\n'
+               'timer_users - ник таймера\n'
+               'admin_users - ник администратора релиза\n'
+               '•/release_start [reset] - старт релиза (если нужен сброс '
+               'текущего времени - использовать параметр reset через пробел)\n'
+               '•/release_stop - остановка работы релиза\n'
+               '•/release_status - отображение статуса релиза\n'
+               '•/release_list - список активных релизов\n\n'
+               'Управление ботом:\nХештеги отправлять только после завершения '
+               'всех действий по текущему этапу\n'
+               '•#role - завершить этап расписывания ролей\n'
+               '•#voice - завершить этап озвучки\n'
+               '•#timer - завершить этап тайминга и сведения\n'
+               '•#fix - завершить этап записи фиксов\n'
+               '•#final - завершить этап финальной обработки серии, '
+               'начать новый эпизод\n'
+               'Если указан max_ep и текущая серия последняя, то после '
+               'отправки #final релиз перейдёт в неактивное состояние')
+    return answer
 
 
 def test_func():

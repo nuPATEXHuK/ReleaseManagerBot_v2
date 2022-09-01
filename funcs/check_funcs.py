@@ -7,7 +7,7 @@ def release_chat_exist(chat_id):
     if code == 'None':
         return False
     else:
-        return code
+        return True
 
 
 def release_code_exist(code):

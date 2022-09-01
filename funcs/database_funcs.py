@@ -5,6 +5,7 @@ from funcs import config_loader as cfg
 
 DB = SQLighter(cfg.get_db())
 ADMIN = cfg.get_admin()
+STAGES = ['role', 'voice', 'timer', 'fix', 'final']
 
 
 def formate_one(result: str):
@@ -61,12 +62,14 @@ def get_active_releases_list() -> List[List]:
     releases_code = get_active_releases_code()
     release_list = list()
     for code in releases_code:
-        request = f'SELECT name, stage FROM releases WHERE code = "{code}"'
+        request = ('SELECT name, stage, current_ep '
+                   f'FROM releases WHERE code = "{code}"')
         release_info = formate_all(
             SQLighter.execute_with_data_one(DB, request))
         name = release_info[0].replace('_', ' ')
         status = release_info[1]
-        release_list.append([name, status])
+        cur_ep = release_info[2]
+        release_list.append([name, status, cur_ep])
     return release_list
 
 
@@ -103,7 +106,8 @@ def get_release_data_by_code(code: str) -> Dict:
             'role_users': results[20],
             'voice_users': results[21],
             'timer_users': results[22],
-            'admin': results[23]}
+            'admin': results[23],
+            'release_time': results[24]}
 
 
 def set_new_param_value(params: dict, code: str):
@@ -136,8 +140,7 @@ def start_release(code: str, reset: bool):
         time_release = cfg.get_alert_stages('top')
     else:
         time_release = cfg.get_alert_stages('standard')
-    stage_list = ['role', 'voice', 'timer', 'fix', 'final']
-    for index, stage in enumerate(stage_list):
+    for index, stage in enumerate(STAGES):
         cur_std_time = get_param(f'{stage}_std_time', code)
         manual_time = False
         if cur_std_time == 'None':
@@ -155,7 +158,11 @@ def start_release(code: str, reset: bool):
                     {f'{stage}_current_time': time_release[index]}, code)
     cur_stage = get_param('stage', code)
     if cur_stage == 'None' or reset:
-        set_new_param_value({'stage': 'role'}, code)
+        set_new_param_value({'stage': 'role',
+                             'release_time': 10080}, code)
+    cur_ep = int(get_param('current_ep', code))
+    if cur_ep == 0:
+        set_new_param_value({'current_ep': 1}, code)
     set_new_param_value({'status': 1}, code)
 
 
@@ -167,3 +174,36 @@ def get_code_from_all_releases():
     request = f'SELECT code FROM releases'
     codes = SQLighter.execute_with_data_all(DB, request)
     return codes
+
+
+def new_ep(code: str):
+    cur_ep = int(get_param('current_ep', code))
+    max_ep_str = get_param('max_ep', code)
+    max_ep = None
+    if not max_ep_str == 'NULL':
+        max_ep = int(max_ep_str)
+    if cur_ep == max_ep:
+        set_new_param_value({'status': 0}, code)
+        return True
+    release_time = int(get_param('release_time', code))
+    for stage in STAGES:
+        std_time = int(get_param(f'{stage}_std_time', code))
+        if stage == 'role':
+            set_new_param_value(
+                {f'{stage}_current_time': std_time + release_time},
+                code)
+        else:
+            set_new_param_value(
+                {f'{stage}_current_time': std_time},
+                code)
+    set_new_param_value({'stage': 'role',
+                         'current_ep': cur_ep + 1,
+                         'release_time': release_time + 10080}, code)
+    return False
+
+
+def new_stage(cur_stage: str, code: str):
+    stage_index = STAGES.index(cur_stage) + 1
+    stage_new = STAGES[stage_index]
+    set_new_param_value({'stage': stage_new,
+                         f'{cur_stage}_current_time': 0}, code)

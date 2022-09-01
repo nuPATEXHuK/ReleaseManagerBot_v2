@@ -15,6 +15,7 @@ TOKEN = cfg.get_token()
 BOT = Bot(TOKEN)
 DP = Dispatcher(BOT)
 TIMEOUT = cfg.get_timeout()
+TAGS = ['#role', '#voice', '#timer', '#fix', '#final']
 
 
 @DP.message_handler(commands=['start'])
@@ -200,6 +201,20 @@ async def release_list(message: types.Message) -> None:
         await message.answer('Работает только в личных сообщениях')
 
 
+@DP.message_handler(commands=['help'])
+async def bot_help(message: types.Message) -> None:
+    """
+    Получение справки
+
+    :param message: входящая команда /bot_help
+    """
+    if int(message.chat.id) > 0:
+        answer = mf.get_help()
+        await message.answer(answer)
+    else:
+        await message.answer('Работает только в личных сообщениях')
+
+
 # Прослушка сообщений
 @DP.message_handler(content_types=['text'])
 async def message_listener(message: types.Message) -> None:
@@ -209,9 +224,14 @@ async def message_listener(message: types.Message) -> None:
 
     :param message: любой текст, отправляемый боту
     """
-    if int(message.chat.id) < 0:
+    chat_id = message.chat.id
+    if int(chat_id) < 0:
         if '#' in message.text:
-            await message.answer('Отбивка в чат, обнаружен тег')
+            for tag in TAGS:
+                if tag in message.text:
+                    answer = mf.new_tag(chat_id, tag.replace('#', ''))
+                    if answer:
+                        await message.answer(answer)
 
 
 async def scheduler(wait_for: int) -> None:
