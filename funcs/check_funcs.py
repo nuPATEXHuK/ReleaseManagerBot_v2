@@ -2,15 +2,26 @@
 import funcs.database_funcs as dbf
 
 
-def release_chat_exist(chat_id):
+def release_chat_exist(chat_id: int) -> bool:
+    """
+    Проверка существования релиза, привязанного к чату
+
+    :param chat_id: ID чата
+    :return: существует релиз или нет
+    """
     code = dbf.get_release_code_by_chat(chat_id)
     if code == 'None':
         return False
-    else:
-        return True
+    return True
 
 
-def release_code_exist(code):
+def release_code_exist(code: str) -> bool:
+    """
+    Проверка на существования релиза с указанным кодом
+
+    :param code: уникальный код релиза
+    :return: существует такой релиз или нет
+    """
     code_list = dbf.get_code_from_all_releases()
     for code_from_db in code_list:
         if dbf.formate_one(str(code_from_db)) == code:
@@ -18,5 +29,11 @@ def release_code_exist(code):
     return False
 
 
-def release_already_start(code):
+def release_already_start(code: str) -> bool:
+    """
+    Проверка, находится ли релиз в работе
+
+    :param code: уникальный код релиза
+    :return: релиз в работе или нет
+    """
     return bool(int(dbf.get_param('status', code)))

@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-nested-blocks
+# pylint: disable=use-list-literal
+# pylint: disable=use-dict-literal
 from typing import Optional, List, Dict
 
 import funcs.check_funcs as check
@@ -23,8 +28,7 @@ def add_release(chat_id: int, code: str) -> str:
     if not errors:
         logger.info('Релиз добавлен')
         return 'Релиз добавлен'
-    else:
-        return errors
+    return errors
 
 
 def edit_release_in_db(chat_id: int, params_dict: dict) -> str:
@@ -201,17 +205,16 @@ def get_new_release_params_dict(params: dict,
             param_from_db = dbf.get_param(key, release_code)
             if param_from_db == new_param_value:
                 continue
-            else:
-                if not (key == 'name' or key == 'code'):
-                    if 'std_time' in key:
-                        new_params[key] = int(new_param_value) * 60
-                    else:
-                        new_params[key] = int(new_param_value)
+            if not (key == 'name' or key == 'code'):
+                if 'std_time' in key:
+                    new_params[key] = int(new_param_value) * 60
                 else:
-                    if key == 'code':
-                        if check.release_code_exist(new_param_value):
-                            continue
-                    new_params[key] = new_param_value
+                    new_params[key] = int(new_param_value)
+            else:
+                if key == 'code':
+                    if check.release_code_exist(new_param_value):
+                        continue
+                new_params[key] = new_param_value
     if len(new_params) < 1:
         return None
     return new_params
@@ -236,20 +239,26 @@ def get_new_users_params_dict(params: dict,
                                           release_code)).replace('/', ',')
         if param_from_db == new_param_value:
             continue
-        else:
-            user_list = str(new_param_value).split(',')
-            new_users = ''
-            for user in user_list:
-                new_users += user + '/'
-            if new_users:
-                new_users = new_users[:-1]
-            new_params[key] = new_users
+        user_list = str(new_param_value).split(',')
+        new_users = ''
+        for user in user_list:
+            new_users += user + '/'
+        if new_users:
+            new_users = new_users[:-1]
+        new_params[key] = new_users
     if len(new_params) < 1:
         return None
     return new_params
 
 
 def new_tag(chat_id: int, tag: str) -> Optional[str]:
+    """
+    Обнаружение нового тега для переключения между этапами и сериями
+
+    :param chat_id: ID чата
+    :param tag: полученный тег
+    :return: если произошло переключение этапов или серии - информация об этом
+    """
     if not check.release_chat_exist(chat_id):
         return None
     code = dbf.get_release_code_by_chat(chat_id)
@@ -262,14 +271,19 @@ def new_tag(chat_id: int, tag: str) -> Optional[str]:
             last_ep = dbf.new_ep(code)
             if last_ep:
                 return 'Работа над релизом закончена'
-            else:
-                return 'Работа над серией закончена'
+            return 'Работа над серией закончена'
         else:
             dbf.new_stage(stage, code)
             return f'Этап {stage} закончен'
+    return None
 
 
-def get_help():
+def get_help() -> str:
+    """
+    Получение справки по боту
+
+    :return: справка по боту
+    """
     answer = 'Справка по боту\n\n'
     answer += ('Список команд:\n'
                '•/release_add [code] - добавление релиза с уникальным кодом\n'
@@ -314,7 +328,12 @@ def get_help():
     return answer
 
 
-def test_func():
+def test_func() -> str:
+    """
+    Тестовая функция для отладки
+
+    :return: тестовые данные
+    """
     status = check.release_already_start('test_release')
     if status:
         answer = 'Релиз запущен'
