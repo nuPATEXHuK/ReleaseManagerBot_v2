@@ -205,7 +205,7 @@ def get_new_release_params_dict(params: dict,
             param_from_db = dbf.get_param(key, release_code)
             if param_from_db == new_param_value:
                 continue
-            if not (key == 'name' or key == 'code'):
+            if key not in {'name', 'code'}:
                 if 'std_time' in key:
                     new_params[key] = int(new_param_value) * 60
                 else:

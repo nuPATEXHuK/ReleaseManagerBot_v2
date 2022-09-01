@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=use-list-literal
+# pylint: disable=use-dict-literal
 from typing import List, Dict
 from funcs.sqlighter import SQLighter
 from funcs import config_loader as cfg
@@ -27,6 +29,7 @@ def add_release(chat_id: int, code: str):
     if not result:
         return 'Релиз не добавлен в связи с ошибкой БД. ' \
                'Обратитесь к администратору.'
+    return None
 
 
 def get_release_code_by_chat(chat_id):
@@ -129,8 +132,7 @@ def set_new_param_value(params: dict, code: str):
     if not result:
         return 'Релиз не добавлен в связи с ошибкой БД. ' \
                'Обратитесь к администратору.'
-    else:
-        return 'Релиз изменён'
+    return 'Релиз изменён'
 
 
 def start_release(code: str, reset: bool):
@@ -171,7 +173,7 @@ def stop_release(code):
 
 
 def get_code_from_all_releases():
-    request = f'SELECT code FROM releases'
+    request = 'SELECT code FROM releases'
     codes = SQLighter.execute_with_data_all(DB, request)
     return codes
 
