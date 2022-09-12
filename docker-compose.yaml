@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  bot-manager:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    restart: unless-stopped
+    volumes:
+    - ./data:/app/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
