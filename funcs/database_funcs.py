@@ -109,8 +109,9 @@ def get_release_data_by_code(code: str) -> Dict:
             'role_users': results[20],
             'voice_users': results[21],
             'timer_users': results[22],
-            'admin': results[23],
-            'release_time': results[24]}
+            'fix_users': results[23],
+            'admin': results[24],
+            'release_time': results[25]}
 
 
 def set_new_param_value(params: dict, code: str):
