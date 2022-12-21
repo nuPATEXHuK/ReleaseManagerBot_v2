@@ -159,28 +159,27 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
                                 code)
         step = std_time / 4
         if cur_time % step == 0 and cur_time <= std_time:
+            skip = check.check_skip_alert()
             users = str(release_data[f'{stage}_users']).split('/')
             alert = ''
-            if len(users) > 0:
-                for user in users:
-                    if user == 'None':
-                        alert += f'@{admin}'
-                    else:
-                        alert += f'@{user} '
-            else:
-                alert += f'@{admin}'
             if cur_time > 0:
                 alert += f'\nДо конца срока этапа {stage} ' \
                          f'осталось: {round(cur_time / 60, 2)} ч.'
             else:
+                skip = False
                 if len(users) > 0 and users[0] != 'None':
-                    alert += f' @{admin}'
+                    alert += f'@{admin}'
+                else:
+                    for user in users:
+                        alert += f'@{user} '
+                    alert += f'@{admin}'
                 if cur_time == 0:
                     alert += f'\nЭтап {stage} просрочен!'
                 else:
                     alert += f'\nЭтап {stage} просрочен! Просрочка ' \
                              f'составляет: {-round(cur_time / 60, 2)} ч.'
-            answer.append([chat_id, alert])
+            if not skip:
+                answer.append([chat_id, alert])
     if len(answer) < 1:
         return None
     return answer

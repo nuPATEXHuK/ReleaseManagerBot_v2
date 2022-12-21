@@ -48,6 +48,18 @@ def get_timeout() -> int:
     return timeout
 
 
+def get_sleep_bot_time() -> list:
+    """
+    Получение времени отсутствия уведомлений от бота
+
+    :return: время начала и конца заглушки
+    """
+    times = config.get('main', 'sleep_bot_time')
+    time_start = times.split('-')[0]
+    time_stop = times.split('-')[1]
+    return [time_start, time_stop]
+
+
 def get_alert_stages(release_type: str) -> List:
     """
     Получение списка времени для алертов в зависимости от типа релиза

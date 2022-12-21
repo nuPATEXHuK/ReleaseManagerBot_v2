@@ -3,6 +3,7 @@ token = 123456789:abcdef
 db_file = database.db
 admin = unknown
 timeout = 60
+sleep_bot_time = 00:00-07:00
 
 [release_settings]
 standard_release_time = 720,2160,2160,840,960

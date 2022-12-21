@@ -2,12 +2,14 @@
 # pylint: disable=use-list-literal
 # pylint: disable=use-dict-literal
 from typing import List, Dict
-from funcs.sqlighter import SQLighter
+
 from funcs import config_loader as cfg
+from funcs.sqlighter import SQLighter
 
 DB = SQLighter(cfg.get_db())
 ADMIN = cfg.get_admin()
 STAGES = ['role', 'voice', 'timer', 'fix', 'final']
+SLEEP_TIMES = cfg.get_sleep_bot_time()
 
 
 def formate_one(result: str):
