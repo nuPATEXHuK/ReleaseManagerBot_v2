@@ -176,7 +176,9 @@ async def edit_work_group(message: types.Message) -> None:
                 'role_users': None,
                 'voice_users': None,
                 'timer_users': None,
-                'admin_users': None
+                'admin_users': None,
+                'fix_users': None,
+                'final_users': None
                 }
             for param in params:
                 for key in params_dict:
