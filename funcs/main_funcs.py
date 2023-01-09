@@ -168,10 +168,10 @@ def check_releases(wait_time: int) -> Optional[List[List]]:
             else:
                 skip = False
                 if len(users) > 0 and users[0] != 'None':
-                    alert += f'@{admin}'
-                else:
                     for user in users:
                         alert += f'@{user} '
+                    alert += f'@{admin}'
+                else:
                     alert += f'@{admin}'
                 if cur_time == 0:
                     alert += f'\nЭтап {stage} просрочен!'
