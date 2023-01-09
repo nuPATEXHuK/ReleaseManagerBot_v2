@@ -176,7 +176,9 @@ async def edit_work_group(message: types.Message) -> None:
                 'role_users': None,
                 'voice_users': None,
                 'timer_users': None,
-                'admin_users': None
+                'admin_users': None,
+                'fix_users': None,
+                'final_users': None
                 }
             for param in params:
                 for key in params_dict:
@@ -241,7 +243,7 @@ async def scheduler(wait_for: int) -> None:
     :param wait_for: время кулдауна на проверку (должно делиться на 60)
     """
     while True:
-        logger.info('Проверка релизов')
+        logger.debug('Проверка релизов')
         answers = mf.check_releases(int(wait_for / 60))
         if answers and len(answers) > 0:
             for answer in answers:
