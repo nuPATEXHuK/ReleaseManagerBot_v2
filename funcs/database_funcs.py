@@ -184,7 +184,7 @@ def get_code_from_all_releases():
 
 def new_ep(code: str):
     cur_ep = int(get_param('current_ep', code))
-    max_ep_str = get_param('max_ep', code)
+    max_ep_str = get_param('max_ep', code).replace("'", '')
     max_ep = None
     if not max_ep_str == 'NULL':
         max_ep = int(max_ep_str)
